@@ -7,8 +7,7 @@ const starCountMultiplier = 1.5;
 const flareAlpha = 2;
 
 function setup() {
-    let cnv = createCanvas(windowWidth, windowHeight);
-    cnv.mousePressed(userStartAudio);
+    createCanvas(windowWidth, windowHeight);
     starCount = windowWidth * starCountMultiplier;
 
     for (var i = 0; i < starCount; i++) {
