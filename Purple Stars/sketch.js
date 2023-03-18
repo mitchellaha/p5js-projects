@@ -3,10 +3,13 @@ var stars = [];
 var flares = [];
 let starCount;
 
+const starCountMultiplier = 1.5;
+const flareAlpha = 2;
 
 function setup() {
-    createCanvas(windowWidth, windowHeight);
-    starCount = windowWidth * 1.5;
+    let cnv = createCanvas(windowWidth, windowHeight);
+    cnv.mousePressed(userStartAudio);
+    starCount = windowWidth * starCountMultiplier;
 
     for (var i = 0; i < starCount; i++) {
         stars[i] = new Star();
@@ -22,11 +25,12 @@ function setup() {
 
 function draw() {
     background(20);
-    circle(mouseX, mouseY, 20);
 
     for (var i = 0; i < stars.length; i++) {
         let starD = stars[i].draw();
         let flareD = flares[i].draw(starD);
+        // fill(255,255,255)
+        // circle(mouseX, mouseY, 20);
     }
 }
 
@@ -58,20 +62,16 @@ class Flare {
         this.w = w;
         this.h = h;
         this.size = size;
-        this.t = random(TAU);
-        this.first = random(100, 195);
-        this.second = random(0,75);
-        this.third = random(100,255);
+        this.firstColor = random(100, 195);
+        this.secondColor = random(0,75);
+        this.thirdColor = random(100,255);
     }
 
     draw(nScale) {
         noStroke();
-        this.t += 0.1;
-        fill(this.first, this.second, this.third, 4);
-        var scale = this.size + sin(this.t) * 2;
-        scale = nScale;
-        for (var i = 0; i < scale * 2; i++) {
-            ellipse(this.x, this.y, i * scale * random(1, 1.75));
+        fill(this.firstColor, this.secondColor, this.thirdColor, flareAlpha);
+        for (var i = 0; i < nScale * 2; i++) {
+            ellipse(this.x, this.y, i * nScale * random(1, 1.75));
         }
     }
 }
