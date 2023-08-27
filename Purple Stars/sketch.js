@@ -570,7 +570,7 @@ let defaultSounds = [
     },
     {
         name: "neverLeave.mp3",
-        url: "./assets/afterDark.mp3"
+        url: "./assets/neverLeave.mp3"
     },
 ]
 
