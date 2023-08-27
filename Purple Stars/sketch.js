@@ -4,10 +4,18 @@ let botchedMode = false;
 let reallybotchedMode = false;
 let eyeMode = false;
 let centerToggle = true;
+let fpsToggle = false;
+let shootingStarToggle = true;
+let regularStarToggle = true;
 let levelMultiplierSlider;
 let levelMultiplier = 100;
 let flaresOn = false;
 let flareAlpha = 2;
+let ringStretch = 3;
+
+// Performance toggles
+let halfInnerViz = true;
+let halfOuterViz = true;
 
 let starCount;  // ? This is assigned based on the window width
 let starCountMultiplier = 0.5;
@@ -140,8 +148,8 @@ const soundObj = {
         if (!sound.isPlaying()) {
             return;
         }
-        // soundObj.drawSpectrum();
-        soundObj.drawCircleWaveform();
+        soundObj.drawSpectrum();
+        // soundObj.drawCircleWaveform();
         // soundObj.drawLevel();
     },
 
@@ -172,7 +180,7 @@ const soundObj = {
         // Draws Circle Waveform in the corners
         noFill();
         stroke("#FF00FF");
-        let diameter = map(level, 0, 1, 0, 100);
+        let diameter = map(level * 2, 0, 1, 0, 100);
         let radius = diameter / 2;
         let currentDegreeDirection = 1;
         const getRandomLocationInCircle = (radius) => {
@@ -188,16 +196,29 @@ const soundObj = {
             [width, height],
             [0, height]
         ]
-        let cornerDegrees = [
-            0,
-            90,
-            180,
-            270
-        ]
+        // TODO: Maybe add a toggle for this. Its pretty cool
+        // shift corners closer to the center of the screen
+        // corners = corners.map((corner) => {
+        //     let x = corner[0];
+        //     let y = corner[1];
+        //     let xShift = width / 4;
+        //     let yShift = height / 4;
+        //     if (x < width / 2) {
+        //         x += xShift;
+        //     } else {
+        //         x -= xShift;
+        //     }
+        //     if (y < height / 2) {
+        //         y += yShift;
+        //     } else {
+        //         y -= yShift;
+        //     }
+        //     return [x, y];
+        // });
         for (let j = 0; j < corners.length; j++) {
             beginShape();
-            currentDegreeDirection = cornerDegrees[j];
-            for (let i = 0; i < waveform.length; i++) {
+            currentDegreeDirection = 1;
+            for (let i = 0; i < waveform.length / (halfOuterViz ? 20 : 1); i++) {
                 let xRadius = radius;
                 let yRadius = radius;
                 if (!botchedMode) {
@@ -236,7 +257,8 @@ const soundObj = {
         noFill();
         beginShape();
         stroke("#FF00FF");
-        let diameter = map(level, 0, 1, 0, 100);
+        let randomInLevel = random(level/ringStretch, level);
+        let diameter = map(randomInLevel, 0, 1, 0, 100);
         let radius = diameter / 2;
         let currentDegreeDirection = 1;
         const getRandomLocationInCircle = (radius) => {
@@ -246,7 +268,8 @@ const soundObj = {
             let y = r * sin(theta);
             return [x, y];
         }
-        for (let i = 0; i < waveform.length; i++) {
+        const randomWaveForm = () => floor(random(0, waveform.length));
+        for (let i = 0; i < waveform.length / (halfInnerViz ? 2 : 1); i++) {
             let xRadius = radius;
             let yRadius = radius;
             if (botchedMode) {
@@ -258,7 +281,8 @@ const soundObj = {
                 stretchFactorMin = -5;
                 stretchFactorMax = 5;
             }
-            let circleFlex = map(waveform[i], -1, 1, stretchFactorMin, stretchFactorMax);
+            let waveFormInt = randomWaveForm();
+            let circleFlex = map(waveform[waveFormInt], -1, 1, stretchFactorMin, stretchFactorMax);
             // console.log(circleFlex)
             // center of circle
             let x = width / 2;
@@ -286,6 +310,8 @@ const soundObj = {
     }
 }
 
+let lastFrameWrite = 0;
+let currFrameRate = 0;
 const textWriter = {
     writeText(x, y, string) {
         fill(255, 255, 255);
@@ -305,11 +331,26 @@ const textWriter = {
         if (!showFirstClickInfo) {
             return;
         }
-        textWriter.writeTextCentered(width / 2, height / 2, "click to select mp3");
+        textWriter.writeTextCentered(width / 2, height / 2, "upload your own song");
     },
 
     hideFirstClick() {
         showFirstClickInfo = false;
+    },
+
+    writeFps() {
+        // Add Background
+        fill(255, 0, 0, 255);
+        rect(width/2, 0, 60, 20);
+        if (lastFrameWrite > 15) {
+            let frameRateInt = frameRate().toFixed(0);
+            textWriter.writeText(width/2, 10, `FPS: ${frameRateInt}`);
+            lastFrameWrite = 0;
+            currFrameRate = frameRateInt;
+        } else {
+            textWriter.writeText(width/2, 10, `FPS: ${currFrameRate}`);
+            lastFrameWrite += 1;
+        }
     },
 
     writeSoundInfo() {
@@ -318,30 +359,38 @@ const textWriter = {
         }
         // Add Background
         fill(0, 0, 0, 255);
-        rect(0, 0, 300, 600);
-        textWriter.writeText(10, 10, `Level: ${level}`);
-        textWriter.writeText(10, 30, `Time: ${String(round(sound.currentTime()))} / ${String(round(sound.duration()))}`);
-        // write all amplitude features
-        textWriter.writeText(10, 50, `Amplitude: ${amplitude.getLevel()}`);
-        // write all fft features
-        textWriter.writeText(10, 70, `FFT: ${fft.analyze()}`);
-        // write all waveform features
-        textWriter.writeText(10, 90, `Waveform: ${fft.waveform()}`);
-        let currentRefreshRate = frameRate();
-        textWriter.writeText(10, 110, `Refresh Rate: ${currentRefreshRate}`);
-        
-        let waveformCount = fft.waveform().length;
-        textWriter.writeText(10, 130, `Waveform Count: ${waveformCount}`);
+        rect(width-255, 0, 255, 600);
+        if (!sound) {
+            return;
+        }
+        // let currentRefreshRate = frameRate();
+        // textWriter.writeText(10, 110, `Refresh Rate: ${currentRefreshRate}`);
+        // let waveformCount = fft.waveform().length;
+        // textWriter.writeText(10, 130, `Waveform Count: ${waveformCount}`);
+        textWriter.writeText(width-250, 10, `Level: ${level}`);
+        textWriter.writeText(width-250, 30, `Time: ${String(round(sound.currentTime()))} / ${String(round(sound.duration()))}`);
+        textWriter.writeText(width-250, 50, `Amplitude: ${amplitude.getLevel()}`);
 
         // write modes
-        textWriter.writeText(10, 150, `Flares On: ${flaresOn}`);
-        textWriter.writeText(10, 170, `Botched Mode: ${botchedMode}`);
-        textWriter.writeText(10, 190, `Really Botched Mode: ${reallybotchedMode}`);
+        textWriter.writeText(width-250, 70, `Flares On: ${flaresOn}`);
+        textWriter.writeText(width-250, 90, `Botched Mode: ${botchedMode}`);
+        textWriter.writeText(width-250, 110, `Really Botched Mode: ${reallybotchedMode}`);
+        textWriter.writeText(width-250, 130, `Eye Mode: ${eyeMode}`);
+        textWriter.writeText(width-250, 150, `Center Toggle: ${centerToggle}`);
+        textWriter.writeText(width-250, 170, `Half Inner: ${halfInnerViz}`);
+        textWriter.writeText(width-250, 190, `Half Outer: ${halfOuterViz}`);
 
         // write counts
-        textWriter.writeText(10, 210, `Star Count: ${starCount}`);
-        textWriter.writeText(10, 230, `Shooting Star Count: ${shootingStarCount}`);
-        textWriter.writeText(10, 250, `Level Multiplier: ${levelMultiplier}`);
+        textWriter.writeText(width-250, 210, `Star Count: ${starCount}`);
+        textWriter.writeText(width-250, 230, `Shooting Star Count: ${shootingStarCount}`);
+        textWriter.writeText(width-250, 250, `Level Multiplier: ${levelMultiplier}`);
+
+        // Add Background for big ones
+        fill(0, 0, 0, 255);
+        rect(0, height-35, width, 30);
+        // Write Big Ones
+        textWriter.writeText(10, height-10, `FFT: ${fft.analyze()}`);
+        textWriter.writeText(10, height-25, `Waveform: ${fft.waveform()}`);
 
         // ! Keep this off. It causes lag
         // // draw the temp waveform
@@ -398,12 +447,10 @@ class Flare {
     }
 
     draw(nScale) {
-        if (flaresOn) {
-            noStroke();
-            fill(this.firstColor, this.secondColor, this.thirdColor, flareAlpha);
-            for (var i = 0; i < nScale * 2; i++) {
-                ellipse(this.x, this.y, i * nScale * random(1, 1.75));
-            }
+        noStroke();
+        fill(this.firstColor, this.secondColor, this.thirdColor, flareAlpha);
+        for (var i = 0; i < nScale * 2; i++) {
+            ellipse(this.x, this.y, i * nScale * random(1, 1.75));
         }
     }
 }
@@ -488,7 +535,8 @@ async function selectMp3File() {
     // ! DOESNT WORK ON SAFARI
     return new Promise((resolve, reject) => {
         input = document.createElement('input');
-        input.accept = 'audio/mp3, audio/*, audio/mpeg, audio/mpeg3;';
+        //mp3, ogg, wav and m4a/aac
+        input.accept = 'audio/*, .mp3, .ogg, .wav, .m4a, .aac';
         input.type = 'file';
         // safari fix
         // input.setAttribute('onchange', 'this.click()');
@@ -506,27 +554,77 @@ async function selectMp3File() {
     });
 }
 
-const handleFirstClick = () => {
-    selectMp3File().then(file => {
-        sound = loadSound(file, soundObj.preloadCallback);
-        textWriter.hideFirstClick();
-    });
+
+const hideFirstClick = () => {
+    showFirstClickInfo = false;
+    removeSoundButtons();
+    textWriter.hideFirstClick();
 }
 
+const handleMouseClick = () => {
+    if (sound) {
+        soundObj.togglePlay();
+    } else {
+        selectMp3File().then(file => {
+            sound = loadSound(file, soundObj.preloadCallback);
+            hideFirstClick();
+        });
+    }
+}
+
+let defaultSounds = [
+    {
+        name: "afterDark.mp3",
+        url: "./assets/afterDark.mp3"
+    },
+    {
+        name: "neverLeave.mp3",
+        url: "./assets/afterDark.mp3"
+    },
+]
 
 function preload() {
+    soundFormats('mp3', 'ogg', 'wav', 'm4a', 'aac');
     // let soundFile = openFileBrowser();
     // sound = loadSound('afterDark.mp3', this.preloadCallback);
     bpm = 140;
     dropTime = 30.5;
 }
 
-// let centerPerlin;
+// Add buttons for playing default sounds
+let soundButtons = [];
+const addSoundButtons = () => {
+    // place in middle of screen
+    let soundButtonX = width / 2 - 110;
+    let soundButtonY = height / 2 - 70;
+    let soundButtonSpacing = 20;
+    for (let i = 0; i < defaultSounds.length; i++) {
+        let button = createButton("Load Default Sound " + defaultSounds[i].name);
+    
+        button.position(soundButtonX, soundButtonY);
+        button.mousePressed(() => {
+            sound = loadSound(defaultSounds[i].url, soundObj.preloadCallback);
+            hideFirstClick();
+        });
+        button.style('border', 'none');
+        button.style('border-radius', '5px');
+        soundButtons.push(button);
+        soundButtonY += soundButtonSpacing;
+    }
+};
+
+const removeSoundButtons = () => {
+    for (let i = 0; i < soundButtons.length; i++) {
+        soundButtons[i].remove();
+    }
+    soundButtons = [];
+}
 
 function setup() {
     const buttons = {
         currentButtons: [],
-        currentButtonX: windowWidth-100,
+        currentText: [],
+        currentButtonX: 10,
         currentButtonY: 10,
         currentButtonSpacing: 20,
         addToggleButton(buttonName, buttonFunction) {
@@ -538,30 +636,50 @@ function setup() {
             this.currentButtons.push(button);
             this.currentButtonY += this.currentButtonSpacing;
         },
-        addSlider(min, max, defaultValue, step) {
+        addSlider(min, max, defaultValue, step, label) {
+            // add label
+            let y = this.currentButtonX;
+            if (label) {
+                let labelElement = createP(label);
+                labelElement.style('color', '#FFFFFF');
+                labelElement.position(this.currentButtonX, this.currentButtonY - 15);
+                this.currentText.push(labelElement);
+                y += 70;
+            }
             let slider = createSlider(min, max, defaultValue, step);
-            slider.position(this.currentButtonX - 200, this.currentButtonY);
-            slider.style('width', '290px');
+            slider.position(y, this.currentButtonY);
+            slider.style('width', '200px');
             this.currentButtons.push(slider);
             this.currentButtonY += this.currentButtonSpacing;
             return slider;
-        }
+        },
+        hideAllButtons() {
+            for (let i = 0; i < this.currentButtons.length; i++) {
+                this.currentButtons[i].remove();
+            }
+            for (let i = 0; i < this.currentText.length; i++) {
+                this.currentText[i].remove();
+            }
+        },
     };
 
     canvas = createCanvas(windowWidth, windowHeight);
-    canvas.mouseClicked(handleFirstClick);
+    canvas.mouseClicked(handleMouseClick);
 
-    levelMultiplierSlider = buttons.addSlider(0, 255, 100, 1);
+    levelMultiplierSlider = buttons.addSlider(0, 255, 100, 1, "levelMulti");
+    ringStretchSlider = buttons.addSlider(1, 5, 3, 1, "ringStretch");
 
-    buttons.addToggleButton("Toggle Flares", () => {
-        flaresOn = !flaresOn;
-    });
+    addSoundButtons();
 
     buttons.addToggleButton("Sound Info", () => {
         showSoundInfo = !showSoundInfo;
     });
 
-    buttons.addToggleButton("Stab Toggle", () => {
+    buttons.addToggleButton("Flares", () => {
+        flaresOn = !flaresOn;
+    });
+
+    buttons.addToggleButton("Inverse", () => {
         botchedMode = !botchedMode;
     });
 
@@ -575,6 +693,30 @@ function setup() {
 
     buttons.addToggleButton("Center", () => {
         centerToggle = !centerToggle;
+    });
+
+    // buttons.addToggleButton("Inner*2", () => {
+    //     halfInnerViz = !halfInnerViz;
+    // });
+
+    // buttons.addToggleButton("Outer*2", () => {
+    //     halfOuterViz = !halfOuterViz;
+    // });
+
+    buttons.addToggleButton("StarFlies", () => {
+        shootingStarToggle = !shootingStarToggle;
+    });
+
+    buttons.addToggleButton("Stars", () => {
+        regularStarToggle = !regularStarToggle;
+    });
+
+    buttons.addToggleButton("FPS", () => {
+        fpsToggle = !fpsToggle;
+    });
+
+    buttons.addToggleButton("Remove Inputs", () => {
+        buttons.hideAllButtons();
     });
 
     amplitude = new p5.Amplitude();
@@ -604,12 +746,17 @@ function setup() {
 
 function draw() {
     levelMultiplier = levelMultiplierSlider.value();
+    ringStretch = ringStretchSlider.value();
     level = amplitude.getLevel() * levelMultiplier;
     spectrum = fft.analyze();
     waveform = fft.waveform();
     if (sound) {
         beat = sound.currentTime() % (60 / bpm);
         currTime = sound.currentTime();
+    }
+
+    if (fpsToggle) {
+        textWriter.writeFps();
     }
 
     background(0, 0, 0, 20);
@@ -627,17 +774,25 @@ function draw() {
         soundObj.drawCornerWaveforms();
     }
 
+    // soundObj.drawSpectrum();
+
     // // * Center Perlin Circle
     // centerPerlin.draw();
 
     // * Shooting Stars
-    for (var i = 0; i < shootingStars.length; i++) {
-        shootingStars[i].draw();
+    if (shootingStarToggle) {
+        for (var i = 0; i < shootingStars.length; i++) {
+            shootingStars[i].draw();
+        }
     }
 
     // * Stars
-    for (var i = 0; i < stars.length; i++) {
-        let starD = stars[i].draw();
-        let flareD = flares[i].draw(starD);
+    if (regularStarToggle) {
+        for (var i = 0; i < stars.length; i++) {
+            let starD = stars[i].draw();
+            if (flaresOn) {
+                let flareD = flares[i].draw(starD);
+            }
+        }
     }
 }
