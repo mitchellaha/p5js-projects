@@ -120,6 +120,7 @@ const starEffector = {
 
 const soundObj = {
     preloadCallback: function() {
+        console.log(input)
         soundObj.togglePlay();
         console.log("sound loaded");
         sound.setVolume(0.5);
@@ -477,16 +478,31 @@ class ShootingStar {
 
 // ! --------------------------------------------------------------
 
+let input;
+let audioFile;
 
 async function selectMp3File() {
     // uses FileAPI to let the user select an mp3 file
     // returns a promise that resolves with the file object
+
+    // ! DOESNT WORK ON SAFARI
     return new Promise((resolve, reject) => {
-        let input = document.createElement('input');
+        input = document.createElement('input');
+        input.accept = 'audio/mp3, audio/*, audio/mpeg, audio/mpeg3;';
         input.type = 'file';
-        input.accept = 'audio/mp3';
-        input.onchange = e => resolve(e.target.files[0]);
+        // safari fix
+        // input.setAttribute('onchange', 'this.click()');
+        // input.style.display = 'none';
+        // document.body.appendChild(input);
+        // !safari will never work
+
+        input.onchange = e => {
+            console.log(e)
+            resolve(e.target.files[0]);
+            audioFile = e.target.files[0];
+        };
         input.click();
+        // console.log(input)
     });
 }
 
