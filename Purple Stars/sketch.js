@@ -529,20 +529,11 @@ let input;
 let audioFile;
 
 async function selectMp3File() {
-    // uses FileAPI to let the user select an mp3 file
-    // returns a promise that resolves with the file object
-
-    // ! DOESNT WORK ON SAFARI
+    userStartAudio();
     return new Promise((resolve, reject) => {
         input = document.createElement('input');
-        //mp3, ogg, wav and m4a/aac
         input.accept = 'audio/*, .mp3, .ogg, .wav, .m4a, .aac';
         input.type = 'file';
-        // safari fix
-        // input.setAttribute('onchange', 'this.click()');
-        // input.style.display = 'none';
-        // document.body.appendChild(input);
-        // !safari will never work
 
         input.onchange = e => {
             console.log(e)
@@ -550,7 +541,6 @@ async function selectMp3File() {
             audioFile = e.target.files[0];
         };
         input.click();
-        // console.log(input)
     });
 }
 
@@ -568,6 +558,7 @@ const handleMouseClick = () => {
         selectMp3File().then(file => {
             sound = loadSound(file, soundObj.preloadCallback);
             hideFirstClick();
+            
         });
     }
 }
@@ -603,6 +594,7 @@ const addSoundButtons = () => {
     
         button.position(soundButtonX, soundButtonY);
         button.mousePressed(() => {
+            userStartAudio();
             sound = loadSound(defaultSounds[i].url, soundObj.preloadCallback);
             hideFirstClick();
         });
@@ -621,6 +613,7 @@ const removeSoundButtons = () => {
 }
 
 function setup() {
+    getAudioContext().suspend();
     const buttons = {
         currentButtons: [],
         currentText: [],
