@@ -1,7 +1,7 @@
 let sound, amplitude;
 
 function preload() {
-    sound = loadSound('test1.mp3');
+    sound = loadSound('test2.mp3');
 }
 function setup() {
     let cnv = createCanvas(windowWidth, windowHeight);
