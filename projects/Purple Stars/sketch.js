@@ -14,6 +14,7 @@ let flareAlpha = 2;
 let ringStretch = 3;
 let usingMic = false;
 let enableBackground = true;
+let jumpystars = false;
 
 // Performance toggles
 let halfInnerViz = true;
@@ -490,9 +491,11 @@ class ShootingStar {
 
 
         // ! Keep Around, Eh
-        // this.x += random(-5, 5);
-        // this.y += random(-5, 5);
-        // this.t += 10;
+        if (jumpystars) {
+            this.x += random(-5, 5);
+            this.y += random(-5, 5);
+            this.t += 10;
+        }
 
 
         var scale = this.size + sin(this.t) * 2;
@@ -735,6 +738,10 @@ function setup() {
 
     buttons.addToggleButton("Background", () => {
         enableBackground = !enableBackground;
+    });
+
+    buttons.addToggleButton("Jumpy Starflies", () => {
+        jumpystars = !jumpystars;
     });
 
     buttons.addToggleButton("Remove Inputs", () => {
