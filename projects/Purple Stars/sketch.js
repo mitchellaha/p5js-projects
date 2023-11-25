@@ -12,6 +12,7 @@ let levelMultiplier = 100;
 let flaresOn = false;
 let flareAlpha = 2;
 let ringStretch = 3;
+let usingMic = false;
 
 // Performance toggles
 let halfInnerViz = true;
@@ -142,6 +143,14 @@ const soundObj = {
             amplitude = new p5.Amplitude();
             amplitude.setInput(sound);
         }
+    },
+
+    enableMicInput() {
+        userStartAudio();
+        sound = new p5.AudioIn();
+        sound.start();
+        amplitude = new p5.Amplitude();
+        amplitude.setInput(sound);
     },
 
     addSoundFeatures() {
@@ -587,8 +596,23 @@ let soundButtons = [];
 const addSoundButtons = () => {
     // place in middle of screen
     let soundButtonX = width / 2 - 110;
-    let soundButtonY = height / 2 - 70;
+    let soundButtonY = height / 2 - 90;
     let soundButtonSpacing = 20;
+
+    // Add Mic Input Button
+    let micButton = createButton("Mic Input");
+    micButton.position(soundButtonX, soundButtonY);
+    micButton.mousePressed(() => {
+        soundObj.enableMicInput();
+        hideFirstClick();
+        usingMic = true;
+    });
+    micButton.style('border', 'none');
+    micButton.style('border-radius', '5px');
+    soundButtons.push(micButton);
+    soundButtonY += soundButtonSpacing;
+
+    // Add Default Sound Buttons
     for (let i = 0; i < defaultSounds.length; i++) {
         let button = createButton("Load Default Sound " + defaultSounds[i].name);
     
@@ -743,7 +767,7 @@ function draw() {
     level = amplitude.getLevel() * levelMultiplier;
     spectrum = fft.analyze();
     waveform = fft.waveform();
-    if (sound) {
+    if (sound && !usingMic) {
         beat = sound.currentTime() % (60 / bpm);
         currTime = sound.currentTime();
     }
