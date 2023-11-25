@@ -585,7 +585,20 @@ let defaultSounds = [
         name: "neverLeave.mp3",
         url: "./assets/neverLeave.mp3"
     },
+    {
+        name: "Dreaddy Bear - Tweaker",
+        url: "./assets/Dreaddy Bear - Tweaker.mp3",
+        cornerLink: "https://soundcloud.com/dreaddybear/dreaddy-bear-tweaker"
+    }
 ]
+
+const displayCornerLink = (link, name) => {
+    // add a link to the corner
+    let linkElement = createA(link, `Soundcloud: ${name}`);
+    linkElement.style('color', '#FFFFFF');
+    linkElement.position(screen.width/2, 10);
+    linkElement.style('z-index', '100');
+}
 
 function preload() {
     soundFormats('mp3', 'ogg', 'wav', 'm4a', 'aac');
@@ -600,7 +613,7 @@ let soundButtons = [];
 const addSoundButtons = () => {
     // place in middle of screen
     let soundButtonX = width / 2 - 110;
-    let soundButtonY = height / 2 - 90;
+    let soundButtonY = height / 2 - 100;
     let soundButtonSpacing = 20;
 
     // Add Mic Input Button
@@ -625,6 +638,9 @@ const addSoundButtons = () => {
             userStartAudio();
             sound = loadSound(defaultSounds[i].url, soundObj.preloadCallback);
             hideFirstClick();
+            if (defaultSounds[i].cornerLink) {
+                displayCornerLink(defaultSounds[i].cornerLink, defaultSounds[i].name);
+            }
         });
         button.style('border', 'none');
         button.style('border-radius', '5px');
