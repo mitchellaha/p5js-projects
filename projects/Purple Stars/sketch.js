@@ -13,6 +13,7 @@ let flaresOn = false;
 let flareAlpha = 2;
 let ringStretch = 3;
 let usingMic = false;
+let enableBackground = true;
 
 // Performance toggles
 let halfInnerViz = true;
@@ -732,6 +733,10 @@ function setup() {
         fpsToggle = !fpsToggle;
     });
 
+    buttons.addToggleButton("Background", () => {
+        enableBackground = !enableBackground;
+    });
+
     buttons.addToggleButton("Remove Inputs", () => {
         buttons.hideAllButtons();
     });
@@ -776,7 +781,9 @@ function draw() {
         textWriter.writeFps();
     }
 
-    background(0, 0, 0, 20);
+    if (enableBackground) {
+        background(0, 0, 0, 20);
+    }
 
     // * Text
     textWriter.writeInfo();
