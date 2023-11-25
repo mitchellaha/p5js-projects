@@ -746,10 +746,8 @@ function setup() {
 
     starCount = windowWidth * starCountMultiplier;
     shootingStarCount = starCount / 5;
-    
-    background(20);
 
-    // centerPerlin = new CenterPerlinNoiseCircle();
+    background(20);
 
     for (var i = 0; i < starCount; i++) {
         stars[i] = new Star();
