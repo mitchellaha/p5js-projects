@@ -470,7 +470,7 @@ class ShootingStar {
         this.x = random(width);
         this.y = random(height);
         this.size = random(0.25, 3);
-        this.t = random(TAU);
+        this.t = random(TAU*120);
         this.first = random(100, 255);
         this.second = random(0,100);
         this.third = random(50,255);
